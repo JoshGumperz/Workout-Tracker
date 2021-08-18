@@ -2,9 +2,9 @@ const router = require('express').Router();
 const mongojs = require("mongojs");
 const { Workout } = require("../../models");
 
-// Get all workouts in ascending order
+// /api/workouts get route
 router.get('/', async (req, res) => {
-    // Use $addFields to get the total duration for the workout https://docs.mongodb.com/manual/reference/operator/aggregation/addFields/#mongodb-pipeline-pipe.-addFields
+    // calculate total workout duration
     Workout.aggregate([
         { $addFields: { totalDuration: { $sum: "$exercises.duration" } } },
         { $sort: { day: 1 } }
@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
         });
 });
 
-// Add an exercise to a workout
+// Add a new exercise
 router.put('/:id', async (req, res) => {
     Workout.updateOne({ "_id": mongojs.ObjectId(req.params.id) },
         { $push: { "exercises": req.body } }, (err, data) => {
@@ -47,12 +47,11 @@ router.post('/', async (req, res) => {
 
 // Get workouts for last 7 days
 router.get('/range', async (req, res) => {
-    // Use $addFields to get the total duration for the workout https://docs.mongodb.com/manual/reference/operator/aggregation/addFields/#mongodb-pipeline-pipe.-addFields
     Workout.aggregate([
         { $addFields: { totalDuration: { $sum: "$exercises.duration" } } },
-        { $sort: { day: -1 } }, // Get the newest results
-        { $limit: 7 },  // Limit the results to the last 7 workouts
-        { $sort: { day: 1 } } // Put the oldest one at the end
+        { $sort: { day: -1 } },
+        { $limit: 7 },
+        { $sort: { day: 1 } }
     ],
         (err, data) => {
             if (err) {
